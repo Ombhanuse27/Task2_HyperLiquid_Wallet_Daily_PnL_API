@@ -1,0 +1,92 @@
+
+{
+	"info": {
+		"_postman_id": "b3e5a1b1-1234-4567-8901-abcdef123456",
+		"name": "HyperLiquid PnL API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Get Daily PnL",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// 1. Check if status code is 200",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"// 2. Parse the response body",
+							"var jsonData = pm.response.json();",
+							"",
+							"// 3. Check for required top-level fields",
+							"pm.test(\"Response has required fields\", function () {",
+							"    pm.expect(jsonData).to.have.property(\"wallet\");",
+							"    pm.expect(jsonData).to.have.property(\"daily\");",
+							"    pm.expect(jsonData).to.have.property(\"summary\");",
+							"});",
+							"",
+							"// 4. Validate Summary Structure",
+							"pm.test(\"Summary contains PnL metrics\", function () {",
+							"    pm.expect(jsonData.summary).to.have.property(\"net_pnl_usd\");",
+							"    pm.expect(jsonData.summary.net_pnl_usd).to.be.a(\"number\");",
+							"});",
+							"",
+							"// 5. Validate Daily Data (if available)",
+							"if (jsonData.daily.length > 0) {",
+							"    pm.test(\"Daily entry has correct schema\", function () {",
+							"        var day = jsonData.daily[0];",
+							"        pm.expect(day).to.have.property(\"date\");",
+							"        pm.expect(day).to.have.property(\"realized_pnl_usd\");",
+							"        pm.expect(day).to.have.property(\"unrealized_pnl_usd\");",
+							"        pm.expect(day).to.have.property(\"equity_usd\");",
+							"    });",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/api/hyperliquid/:wallet/pnl?start=2025-12-01&end=2025-12-30",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"hyperliquid",
+						":wallet",
+						"pnl"
+					],
+					"query": [
+						{
+							"key": "start",
+							"value": "2025-12-01",
+							"description": "Start Date (YYYY-MM-DD)"
+						},
+						{
+							"key": "end",
+							"value": "2025-12-30",
+							"description": "End Date (YYYY-MM-DD)"
+						}
+					],
+					"variable": [
+						{
+							"key": "wallet",
+							"value": "0x5D2F4460Ac3514AdA79f5D9838916E508Ab39Bb7",
+							"description": "Wallet Address"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
