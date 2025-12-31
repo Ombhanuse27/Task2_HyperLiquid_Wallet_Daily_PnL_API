@@ -5,7 +5,6 @@ const hlApi = require('./hyperliquid');
 
 exports.calculatePnL = async (wallet, startStr, endStr) => {
     // 1. Fetch all required raw data
-    // We fetch data slightly before start date to ensure we have a "start of day" reference
     const startTimeMs = dayjs(startStr).subtract(1, 'day').valueOf();
     
     const [portfolio, fills, fundingEvents] = await Promise.all([
@@ -26,7 +25,6 @@ exports.calculatePnL = async (wallet, startStr, endStr) => {
     // Helper: Find value closest to a timestamp in a history array (for Net PnL/Equity)
     const findClosestValue = (historyArray, timestamp) => {
         if (!historyArray || historyArray.length === 0) return 0;
-        // Arrays are sorted by time. Find last entry <= timestamp
         let lastVal = 0;
         for (const [t, v] of historyArray) {
             if (t > timestamp) break;
@@ -41,21 +39,20 @@ exports.calculatePnL = async (wallet, startStr, endStr) => {
         const dayEnd = currentDate.endOf('day').valueOf();
         const dateStr = currentDate.format('YYYY-MM-DD');
 
-        // --- A. Aggregates from Fills (Realized PnL & Fees) ---
+        // Aggregates from Fills (Realized PnL & Fees) 
         const dayFills = fills.filter(f => f.time >= dayStart && f.time <= dayEnd);
         
         const realized = dayFills.reduce((sum, f) => sum + parseFloat(f.closedPnl || 0), 0);
         // Fees are usually positive in API but negative for PnL. PDF asks for "Fees" as absolute value.
         const fees = dayFills.reduce((sum, f) => sum + parseFloat(f.fee || 0), 0);
 
-        // --- B. Aggregates from Funding ---
+        // B. Aggregates from Funding 
         // Funding: Positive = received, Negative = paid. 
         const dayFunding = fundingEvents
             .filter(e => e.time >= dayStart && e.time <= dayEnd)
             .reduce((sum, e) => sum + parseFloat(e.usdc || 0), 0);
 
-        // --- C. Net PnL & Equity (From Portfolio Snapshots) ---
-        // We calculate daily Net PnL as: (Cumulative PnL at End of Day) - (Cumulative PnL at Start of Day)
+        // C. Net PnL & Equity (From Portfolio Snapshots) 
         const pnlAtStart = findClosestValue(portfolio.pnlHistory, dayStart);
         const pnlAtEnd = findClosestValue(portfolio.pnlHistory, dayEnd);
         let netPnl = pnlAtEnd - pnlAtStart;
@@ -67,7 +64,7 @@ exports.calculatePnL = async (wallet, startStr, endStr) => {
 
         const equity = findClosestValue(portfolio.accountValueHistory, dayEnd);
 
-        // --- D. Derived Unrealized PnL ---
+        // D. Derived Unrealized PnL 
         // Formula: Net = Realized + Unrealized - Fees + Funding
         // Therefore: Unrealized = Net - Realized + Fees - Funding
         const unrealized = netPnl - realized + fees - dayFunding;

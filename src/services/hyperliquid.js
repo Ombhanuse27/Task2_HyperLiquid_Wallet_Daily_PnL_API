@@ -2,10 +2,9 @@ const axios = require('axios');
 
 const HL_API_URL = 'https://api.hyperliquid.xyz/info';
 
-/**
- * Fetches Portfolio History (Net PnL & Equity over time).
- * This endpoint provides the "source of truth" for account value.
- */
+
+//Fetches Portfolio History (Net PnL & Equity over time).
+
 exports.getPortfolioHistory = async (user) => {
     try {
         const res = await axios.post(HL_API_URL, { type: "portfolio", user });
@@ -18,10 +17,8 @@ exports.getPortfolioHistory = async (user) => {
     }
 };
 
-/**
- * Fetches Trade Fills (Realized PnL & Fees).
- * 'userFills' returns the most recent 2000 trades.
- */
+
+//Fetches Trade Fills (Realized PnL & Fees).
 exports.getFills = async (user) => {
     try {
         const res = await axios.post(HL_API_URL, { type: "userFills", user });
